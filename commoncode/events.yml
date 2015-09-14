@@ -1,0 +1,21 @@
+---
+
+- name: Check that there is at least one event on the events page
+  test:
+    - load: 'https://commoncode.com.au'
+    - click: 'View Events'
+    - assertText: 'RSVP'
+
+
+- name: Follow the link to our events page and sign up to the newsletter
+  test:
+    - load: 'https://commoncode.com.au'
+    - click: 'View Events'
+
+    - submit:
+      - '#mc-embedded-subscribe-form'
+      - EMAIL: 'brenton@brntn.me'
+
+    # wait a few seconds for the Mail Chimp response
+    - wait: 5
+    - assertText: 'already subscribed'
