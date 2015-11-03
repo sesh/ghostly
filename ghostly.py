@@ -2,13 +2,16 @@
 # -*- coding: utf-8 -*-
 
 """
-
 Surely we can do
 basic acceptance testing
 with just 5 commands
 
-load, click, submit, wait, assertText
+load, click, fill, submit, wait, assertText (& switchTo)
 """
+
+import random
+import string
+import traceback
 
 import sys
 import time
@@ -26,6 +29,10 @@ def milli_now():
 class Ghostly:
 
     def __init__(self):
+        # desired_cap = {'os': 'Windows', 'os_version': '7', 'browser': 'IE', 'browser_version': '10.0' }
+        # self.browser = webdriver.Remote(
+        #     command_executor='http://commoncode:wmwMb2zdHzURYxaQFEVF@hub.browserstack.com:80/wd/hub',
+        #     desired_capabilities=desired_cap)
         self.browser = webdriver.Chrome()
 
     def end(self):
@@ -63,9 +70,10 @@ class Ghostly:
 
                 else:
                     funcs = [
+                        parent.find_element_by_name,
+                        parent.find_element_by_id,
                         parent.find_element_by_css_selector,
                         parent.find_element_by_tag_name,
-                        parent.find_element_by_name,
                         parent.find_element_by_link_text
                     ]
 
@@ -83,31 +91,75 @@ class Ghostly:
 
 
     def load(self, url):
+        """
+        Load the provided URL in the web browser
+        """
         self.browser.get(url)
 
 
     def click(self, selector):
+        """
+        Click on an element that's currently visble on the page. The element can be selected
+        with a range of selectors:
+            - .class_name
+            - #element_id
+            - element
+            - "Link Text"
+        """
         element = self._get_element(selector)
         element.click()
 
 
-    def submit(self, selector, contents):
-        form = self._get_element(selector)
-        for k, v in contents.items():
-            element = self._get_element(k, parent=form)
-            element.send_keys(v)
+    def submit(self, selector, *contents):
+        """
+        Fill out and submit a form
+        """
+        form = fill(selector, *contents)
         form.submit()
 
 
+    def fill(self, selector, *contents):
+        """
+        Fill out a form without submitting it.
+
+        Provide a list where the first item is the selector to use to find the form and
+        all following items are <selector>: <value> pairs to be used to complete the form.
+
+        Use the `submit` function if you also want to submit the form.
+        """
+        r = ''.join(random.choice(string.letters + string.digits) for _ in range(12))
+        form = self._get_element(selector)
+        for c in contents:
+            for k, v in c.items():
+                v = v.replace('<random>', r)
+                element = self._get_element(k, parent=form)
+                element.send_keys(v)
+        return form
+
+
     def assertText(self, text, selector='body'):
+        """
+        Assert that a piece of text exists on the currently displayed page.
+        """
         self.wait(1)
         element = self._get_element(selector)
         assert text in element.text
 
 
     def wait(self, seconds):
+        """
+        Wait for a specified number of seconds
+        """
+        if type(seconds) == str:
+            seconds = int(seconds)
         time.sleep(seconds)
 
+
+    def switchTo(self, selector):
+        """
+        Switch to a new frame (useful for navigating between iFrames)
+        """
+        self.browser.switch_to_frame(selector)
 
 
 if __name__ == '__main__':
@@ -117,18 +169,18 @@ if __name__ == '__main__':
             g = Ghostly()
             try:
                 for step in test['test']:
+                    # print step
                     for f, v in step.items():
                         func = getattr(g, f)
                         if type(v) == list:
                             func(*v)
                         else:
                             func(v)
-
             # explicitly catch the error states for now
             except NoSuchElementException:
-                print '✘ {}'.format(test['name'])
+                print "✘ {} (couldn't find element)".format(test['name'])
             except AssertionError:
-                print '✘ {}'.format(test['name'])
+                print "✘ {} (assertion failed)".format(test['name'])
             else:
                 print '✔ {}'.format(test['name'])
             finally:
