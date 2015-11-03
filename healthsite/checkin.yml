@@ -1,0 +1,70 @@
+---
+
+- name: Patient can check-in for an appointment
+  test:
+    - load: http://staging.healthsite.io/checkin/
+
+    - click: "Get Started!"
+    - fill:
+      - "form"
+      - first_name: Mark
+      - last_name: Tester
+    - click: "button"
+    - wait: 1
+
+    - fill:
+      - "form"
+      - day: "01"
+      - month: "01"
+      - year: "1989"
+    - click: ".radio__label"
+    - wait: 1
+    - click: "button"
+
+    - assertText: "successfully checked in"
+
+- name: New patients are directed to reception
+  test:
+    - load: http://staging.healthsite.io/checkin/
+
+    - click: "Get Started!"
+    - fill:
+      - "form"
+      - first_name: Mark
+      - last_name: Tester
+    - click: "button"
+    - wait: 1
+
+    - fill:
+      - "form"
+      - day: "01"
+      - month: "01"
+      - year: "1995"
+    - click: ".radio__label"
+    - wait: 1
+    - click: "button"
+    - assertText: "talk to reception"
+
+
+- name: Fake patient cannot book an appointment
+  test:
+    - load: http://staging.healthsite.io/checkin/
+
+    - click: "Get Started!"
+    - fill:
+      - "form"
+      - first_name: Brenton
+      - last_name: Cleeland
+    - click: "button"
+    - wait: 1
+
+    - fill:
+      - "form"
+      - day: "01"
+      - month: "01"
+      - year: "1989"
+    - click: ".radio__label"
+    - wait: 1
+    - click: "button"
+
+    - assertText: "could not check you in"
