@@ -97,6 +97,16 @@ class Ghostly:
         self.browser.get(url)
 
 
+    def navigate(self, navigation):
+        """
+        Navigate with browser history
+        http://selenium-python.readthedocs.org/navigating.html#navigation-history-and-location
+        TODO: handle all the methods available!
+        back, forward, refresh, to(navigation)
+        """
+        self.browser.back()
+
+
     def click(self, selector):
         """
         Click on an element that's currently visble on the page. The element can be selected
@@ -161,6 +171,29 @@ class Ghostly:
         """
         self.browser.switch_to_frame(selector)
 
+
+    def assertElement(self, selector):
+        """
+        Assert that an element exists on currently displayed page.
+        """
+        self.wait(1)
+        element = self._get_element(selector)
+        assert element.tag_name == selector
+
+
+    def assertValue(self, *contents):
+        """
+        Assert that an element exists on currently displayed page.
+        """
+        self.wait(1)
+        element = self._get_element(contents[0]['element'])
+        value = contents[0]['value']
+
+        try:
+            element.get_attribute("tagName") is "INPUT"
+        except:
+            print "✘ Element is not an input"
+        assert value == element.get_attribute("value")
 
 if __name__ == '__main__':
     for arg in sys.argv[1:]:
