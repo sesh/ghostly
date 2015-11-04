@@ -9,6 +9,8 @@
       - "form"
       - first_name: Mark
       - last_name: Tester
+
+    - assertElement: "button"
     - click: "button"
     - wait: 1
 
@@ -22,6 +24,9 @@
     - click: "button"
 
     - assertText: "successfully checked in"
+
+    - assertText: "Reset"
+
 
 - name: New patients are directed to reception
   test:
@@ -44,6 +49,7 @@
     - wait: 1
     - click: "button"
     - assertText: "talk to reception"
+    - assertText: "Reset"
 
 
 - name: Fake patient cannot book an appointment
@@ -68,3 +74,76 @@
     - click: "button"
 
     - assertText: "could not check you in"
+    - assertText: "Reset"
+
+
+- name: Reset works on home page
+  test:
+    - load: http://staging.healthsite.io/checkin/
+
+    - assertText: "Reset"
+    - click: "Reset"
+    - assertText: "Your session has been reset"
+
+
+- name: Reset works on login page
+  test:
+    - load: http://staging.healthsite.io/checkin/step-one
+
+    - assertText: "Reset"
+    - click: "Reset"
+    - assertText: "Your session has been reset"
+
+
+- name: Reset works on checkin page
+  test:
+    - load: http://staging.healthsite.io/checkin/
+
+    - click: "Get Started!"
+    - fill:
+      - "form"
+      - first_name: Mark
+      - last_name: Tester
+
+    - assertElement: "button"
+    - click: "button"
+    - wait: 1
+
+    - fill:
+      - "form"
+      - day: "01"
+      - month: "01"
+      - year: "1989"
+    - click: ".radio__label"
+    - wait: 1
+
+    - assertText: "Reset"
+    - click: "Reset"
+    - assertText: "Your session has been reset"
+
+- name: Reset works with navigation
+  test:
+    - load: http://staging.healthsite.io/checkin/
+
+    - click: "Get Started!"
+    - fill:
+      - "form"
+      - first_name: Mark
+      - last_name: Tester
+
+    # Input persists with back button
+    - click: "button"
+    - navigate: "back"
+    - assertValue:
+        element: "#first_name"
+        value: "Mark"
+    - wait: 1
+
+    # Now clear it
+    - assertElement: "button"
+    - click: ".reset--global"
+    - wait: 1
+    - click: "Get Started!"
+    - assertValue:
+        element: "#first_name"
+        value: ""
