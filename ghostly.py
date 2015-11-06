@@ -6,7 +6,7 @@ Surely we can do
 basic acceptance testing
 with just 6 commands
 
-Browser Commands: load, click, fill, submit, wait, switch_to
+Browser Commands: load, click, fill, submit, wait, switch_to, navigate
 Asserts: assert_text
 """
 
@@ -152,6 +152,17 @@ class Ghostly:
         Switch to a new frame (useful for navigating between iFrames)
         """
         self.browser.switch_to_frame(selector)
+
+    def navigate(self, navigation):
+        """
+        Possible navigation methods:
+            - forward
+            - back
+        """
+        if navigation not in ['forward', 'back']:
+            raise AttributeError("An invalid option was given to the navigation command")
+        f = getattr(self.browser, navigation)
+        f()
 
 
 @click.command()
