@@ -12,14 +12,14 @@ Asserts: assert_text
 
 import random
 import string
-
 import sys
 import time
 
+import click
 import yaml
 
 from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, WebDriverException
 
 
 def milli_now():
@@ -28,8 +28,12 @@ def milli_now():
 
 class Ghostly:
 
-    def __init__(self):
-        self.browser = webdriver.Chrome()
+    def __init__(self, browser):
+        browser = browser.lower()
+        if browser == 'firefox':
+            self.browser = webdriver.Firefox()
+        elif browser == 'chrome':
+            self.browser = webdriver.Chrome()
 
     def end(self):
         self.browser.quit()
@@ -149,26 +153,60 @@ class Ghostly:
         """
         self.browser.switch_to_frame(selector)
 
+
+@click.command()
+@click.argument('ghostly_files', type=click.File('rb'), nargs=-1)
+@click.option('--browser', default='chrome', help='browser to use [chrome, firefox]')
+@click.option('--verbose', is_flag=True)
+def run_ghostly(ghostly_files, browser, verbose):
+    tests = []
+    passed = []
+    failed = []
+
+    for f in ghostly_files:
+        test_yaml = yaml.load(f.read())
+        tests.extend(test_yaml)
+
+    click.echo('Running {} tests...'.format(len(tests)))
+    for test in tests:
+        # we create a new Ghostly instance for each tests, keeps things nice and
+        # isolated / ensures there is a clear cache
+        g = Ghostly(browser)
+        try:
+            for step in test['test']:
+                # print step
+                for f, v in step.items():
+                    func = getattr(g, f)
+                    if type(v) == list:
+                        func(*v)
+                    else:
+                        func(v)
+        # explicitly catch the possible error states and fail the test with an appropriate message
+        except NoSuchElementException as e:
+            fail(test['name'], "couldn't find element", e, verbose)
+            failed.append(test)
+        except WebDriverException as e:
+            fail(test['name'], "webdriver failed", e, verbose)
+            failed.append(test)
+        except AssertionError as e:
+            fail(test['name'], "couldn't find element", e, verbose)
+            failed.append(test)
+        else:
+            click.echo(click.style("✔", fg='green') + " " + test['name'])
+            passed.append(test)
+        finally:
+            g.end()
+
+    click.echo("{}/{} tests have passed".format(len(passed), len(tests)))
+    if failed:
+        sys.exit(1)
+
+
+def fail(name, reason, exception=None, verbose=False):
+    click.echo(click.style("✘", fg='red') + " {} ({})".format(name, reason))
+    if verbose:
+        click.echo(exception)
+
+
 if __name__ == '__main__':
-    for arg in sys.argv[1:]:
-        test_yaml = yaml.load(open(arg).read())
-        for test in test_yaml:
-            g = Ghostly()
-            try:
-                for step in test['test']:
-                    # print step
-                    for f, v in step.items():
-                        func = getattr(g, f)
-                        if type(v) == list:
-                            func(*v)
-                        else:
-                            func(v)
-            # explicitly catch the error states for now
-            except NoSuchElementException:
-                print "✘ {} (couldn't find element)".format(test['name'])
-            except AssertionError:
-                print "✘ {} (assertion failed)".format(test['name'])
-            else:
-                print '✔ {}'.format(test['name'])
-            finally:
-                g.end()
+    run_ghostly()
