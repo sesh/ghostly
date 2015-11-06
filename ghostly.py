@@ -4,10 +4,11 @@
 """
 Surely we can do
 basic acceptance testing
-with just 6 commands
+with just 7 commands
+(& 5 asserts)
 
 Browser Commands: load, click, fill, submit, wait, switch_to, navigate
-Asserts: assert_text
+Asserts: assert_text, assert_element, assert_value, assert_title, assert_url
 """
 
 import random
@@ -26,6 +27,10 @@ def milli_now():
     return int(time.time() * 1000)
 
 
+class GhostlyTestFailed(Exception):
+    pass
+
+
 class Ghostly:
 
     def __init__(self, browser):
@@ -34,6 +39,7 @@ class Ghostly:
             self.browser = webdriver.Firefox()
         elif browser == 'chrome':
             self.browser = webdriver.Chrome()
+        self.browser.maximize_window()
 
     def end(self):
         self.browser.quit()
@@ -62,26 +68,34 @@ class Ghostly:
 
             try:
                 if selector.startswith('#'):
-                    return parent.find_element_by_id(selector.replace('#', ''))
+                    elements = parent.find_elements_by_id(selector.replace('#', ''))
 
                 elif selector.startswith('.'):
-                    return parent.find_element_by_class_name(selector.replace('.', ''))
+                    elements = parent.find_elements_by_class_name(selector.replace('.', ''))
 
                 else:
                     funcs = [
-                        parent.find_element_by_name,
-                        parent.find_element_by_id,
-                        parent.find_element_by_css_selector,
-                        parent.find_element_by_tag_name,
-                        parent.find_element_by_link_text
+                        parent.find_elements_by_tag_name,
+                        parent.find_elements_by_name,
+                        parent.find_elements_by_id,
+                        parent.find_elements_by_css_selector,
+                        parent.find_elements_by_link_text
                     ]
 
                     for f in funcs:
                         try:
-                            element = f(selector)
-                            return element
+                            elements = f(selector)
+                            if elements:
+                                break
                         except NoSuchElementException:
                             pass
+
+                if elements:
+                    for element in elements:
+                        # ignore hidden form elements
+                        if element.tag_name.lower() == 'input' and element.get_attribute('type') == 'hidden':
+                            continue
+                        return element
 
             except NoSuchElementException:
                 pass
@@ -131,14 +145,6 @@ class Ghostly:
                 element.send_keys(v)
         return form
 
-    def assert_text(self, text, selector='body'):
-        """
-        Assert that a piece of text exists on the currently displayed page.
-        """
-        self.wait(1)
-        element = self._get_element(selector)
-        assert text in element.text
-
     def wait(self, seconds):
         """
         Wait for a specified number of seconds
@@ -164,12 +170,55 @@ class Ghostly:
         f = getattr(self.browser, navigation)
         f()
 
+    def assert_text(self, text, selector='body'):
+        """
+        Assert that a piece of text exists on the currently displayed page.
+        """
+        self.wait(1)
+        element = self._get_element(selector)
+        import ipdb; ipdb.set_trace()
+
+        if not text in element.text:
+            raise GhostlyTestFailed("{} not in {}".format(text, element.text))
+
+    def assert_element(self, selector):
+        """
+        Ensure that at least one element exists that matches the selector
+        """
+        self.wait(1)
+        element = self._get_element(selector)
+        if not element:
+            raise GhostlyTestFailed("no element matched {}".format(selector))
+
+    def assert_value(self, selector, value):
+        """
+        Assert that the value of a form element is the provided value
+
+        - assert_value:
+          - "input"
+          - "Hello World"
+        """
+        self.wait(1)
+        element = self._get_element(selector)
+        if element.get_attribute('value') != value:
+            raise GhostlyTestFailed("{} != {}".format(element.get_attribute('value'), value))
+
+    def assert_title(self, value):
+        self.wait(1)
+        if self.browser.title != value:
+            raise GhostlyTestFailed("title is {} not {}".format(self.browser.title, value))
+
+    def assert_url(self, url):
+        self.wait(1)
+        if self.browser.current_url != url:
+            raise GhostlyTestFailed("url is {} not {}".format(self.browser.current_url, url))
 
 @click.command()
 @click.argument('ghostly_files', type=click.File('rb'), nargs=-1)
 @click.option('--browser', default='chrome', help='browser to use [chrome, firefox]')
 @click.option('--verbose', is_flag=True)
 def run_ghostly(ghostly_files, browser, verbose):
+    start = time.time()
     tests = []
     passed = []
     failed = []
@@ -178,7 +227,8 @@ def run_ghostly(ghostly_files, browser, verbose):
         test_yaml = yaml.load(f.read())
         tests.extend(test_yaml)
 
-    click.echo('Running {} tests...'.format(len(tests)))
+    plural = len(tests) != 1 and "s" or ""
+    click.echo('Running {} test{}...'.format(len(tests), plural))
     for test in tests:
         # we create a new Ghostly instance for each tests, keeps things nice and
         # isolated / ensures there is a clear cache
@@ -199,8 +249,8 @@ def run_ghostly(ghostly_files, browser, verbose):
         except WebDriverException as e:
             fail(test['name'], "webdriver failed", e, verbose)
             failed.append(test)
-        except AssertionError as e:
-            fail(test['name'], "couldn't find element", e, verbose)
+        except GhostlyTestFailed as e:
+            fail(test['name'], e.message, e, verbose)
             failed.append(test)
         else:
             click.echo(click.style("✔", fg='green') + " " + test['name'])
@@ -208,7 +258,11 @@ def run_ghostly(ghostly_files, browser, verbose):
         finally:
             g.end()
 
-    click.echo("{}/{} tests have passed".format(len(passed), len(tests)))
+    stop = time.time()
+
+    taken = float(stop - start)
+    click.echo("Ran {} test{} in {:.2f}s".format(len(tests), plural, taken))
+
     if failed:
         sys.exit(1)
 

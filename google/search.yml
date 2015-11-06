@@ -1,0 +1,27 @@
+---
+- name: "Google for Duck Duck Go / DDG for Google"
+  test:
+    - load: "https://google.com"
+    - submit:
+      - "form"
+      - q: "Duck Duck Go"
+
+    - assert_value:
+      - "input"
+      - "Duck Duck Go"
+
+    - click: "DuckDuckGo"
+    - wait: 2
+
+    - assert_url: 'https://duckduckgo.com/'
+    - assert_title: "DuckDuckGo"
+
+    - submit:
+      - "form"
+      - q: "Google"
+
+    - click: ".result__title"
+
+    - assert_value:
+      - "btnI"
+      - "I'm Feeling Lucky"
