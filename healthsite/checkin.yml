@@ -21,7 +21,7 @@
     - wait: 1
     - click: "button"
 
-    - assertText: "successfully checked in"
+    - assert_text: "successfully checked in"
 
 - name: New patients are directed to reception
   test:
@@ -43,7 +43,7 @@
     - click: ".radio__label"
     - wait: 1
     - click: "button"
-    - assertText: "talk to reception"
+    - assert_text: "talk to reception"
 
 
 - name: Fake patient cannot book an appointment
@@ -67,4 +67,4 @@
     - wait: 1
     - click: "button"
 
-    - assertText: "could not check you in"
+    - assert_text: "could not check you in"

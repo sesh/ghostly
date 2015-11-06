@@ -4,14 +4,14 @@
 """
 Surely we can do
 basic acceptance testing
-with just 5 commands
+with just 6 commands
 
-load, click, fill, submit, wait, assertText (& switchTo)
+Browser Commands: load, click, fill, submit, wait, switch_to
+Asserts: assert_text
 """
 
 import random
 import string
-import traceback
 
 import sys
 import time
@@ -29,15 +29,10 @@ def milli_now():
 class Ghostly:
 
     def __init__(self):
-        # desired_cap = {'os': 'Windows', 'os_version': '7', 'browser': 'IE', 'browser_version': '10.0' }
-        # self.browser = webdriver.Remote(
-        #     command_executor='http://commoncode:wmwMb2zdHzURYxaQFEVF@hub.browserstack.com:80/wd/hub',
-        #     desired_capabilities=desired_cap)
         self.browser = webdriver.Chrome()
 
     def end(self):
         self.browser.quit()
-
 
     def _get_element(self, selector, parent=None, wait=10):
         """
@@ -89,13 +84,11 @@ class Ghostly:
 
         raise NoSuchElementException('Could not find element matching {}'.format(selector))
 
-
     def load(self, url):
         """
         Load the provided URL in the web browser
         """
         self.browser.get(url)
-
 
     def click(self, selector):
         """
@@ -109,14 +102,12 @@ class Ghostly:
         element = self._get_element(selector)
         element.click()
 
-
     def submit(self, selector, *contents):
         """
         Fill out and submit a form
         """
-        form = fill(selector, *contents)
+        form = self.fill(selector, *contents)
         form.submit()
-
 
     def fill(self, selector, *contents):
         """
@@ -136,15 +127,13 @@ class Ghostly:
                 element.send_keys(v)
         return form
 
-
-    def assertText(self, text, selector='body'):
+    def assert_text(self, text, selector='body'):
         """
         Assert that a piece of text exists on the currently displayed page.
         """
         self.wait(1)
         element = self._get_element(selector)
         assert text in element.text
-
 
     def wait(self, seconds):
         """
@@ -154,13 +143,11 @@ class Ghostly:
             seconds = int(seconds)
         time.sleep(seconds)
 
-
-    def switchTo(self, selector):
+    def switch_to(self, selector):
         """
         Switch to a new frame (useful for navigating between iFrames)
         """
         self.browser.switch_to_frame(selector)
-
 
 if __name__ == '__main__':
     for arg in sys.argv[1:]:

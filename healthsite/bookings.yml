@@ -26,4 +26,4 @@
     - wait: 3
     - click: 'Confirm Appointment'
     - wait: 2
-    - assertText: 'Your appointment has been submitted'
+    - assert_text: 'Your appointment has been submitted'
