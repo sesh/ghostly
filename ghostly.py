@@ -69,10 +69,8 @@ class Ghostly:
             try:
                 if selector.startswith('#'):
                     elements = parent.find_elements_by_id(selector.replace('#', ''))
-
                 elif selector.startswith('.'):
                     elements = parent.find_elements_by_class_name(selector.replace('.', ''))
-
                 else:
                     funcs = [
                         parent.find_elements_by_tag_name,
@@ -176,9 +174,8 @@ class Ghostly:
         """
         self.wait(1)
         element = self._get_element(selector)
-        import ipdb; ipdb.set_trace()
 
-        if not text in element.text:
+        if text not in element.text:
             raise GhostlyTestFailed("{} not in {}".format(text, element.text))
 
     def assert_element(self, selector):
@@ -213,6 +210,39 @@ class Ghostly:
         if self.browser.current_url != url:
             raise GhostlyTestFailed("url is {} not {}".format(self.browser.current_url, url))
 
+
+def run_test(test, browser, verbose):
+    # we create a new Ghostly instance for each tests, keeps things nice and
+    # isolated / ensures there is a clear cache
+    g = Ghostly(browser)
+    try:
+        for step in test['test']:
+            # print step
+            for f, v in step.items():
+                func = getattr(g, f)
+                if type(v) == list:
+                    func(*v)
+                else:
+                    func(v)
+    # explicitly catch the possible error states and fail the test with an appropriate message
+    except NoSuchElementException as e:
+        fail(test['name'], "couldn't find element", e, verbose)
+        passed = False
+    except WebDriverException as e:
+        fail(test['name'], "webdriver failed", e, verbose)
+        passed = False
+    except GhostlyTestFailed as e:
+        fail(test['name'], e.message, e, verbose)
+        passed = False
+    else:
+        click.echo(click.style("✔", fg='green') + " " + test['name'])
+        passed = True
+    finally:
+        g.end()
+
+    return passed
+
+
 @click.command()
 @click.argument('ghostly_files', type=click.File('rb'), nargs=-1)
 @click.option('--browser', default='chrome', help='browser to use [chrome, firefox]')
@@ -230,33 +260,10 @@ def run_ghostly(ghostly_files, browser, verbose):
     plural = len(tests) != 1 and "s" or ""
     click.echo('Running {} test{}...'.format(len(tests), plural))
     for test in tests:
-        # we create a new Ghostly instance for each tests, keeps things nice and
-        # isolated / ensures there is a clear cache
-        g = Ghostly(browser)
-        try:
-            for step in test['test']:
-                # print step
-                for f, v in step.items():
-                    func = getattr(g, f)
-                    if type(v) == list:
-                        func(*v)
-                    else:
-                        func(v)
-        # explicitly catch the possible error states and fail the test with an appropriate message
-        except NoSuchElementException as e:
-            fail(test['name'], "couldn't find element", e, verbose)
-            failed.append(test)
-        except WebDriverException as e:
-            fail(test['name'], "webdriver failed", e, verbose)
-            failed.append(test)
-        except GhostlyTestFailed as e:
-            fail(test['name'], e.message, e, verbose)
-            failed.append(test)
-        else:
-            click.echo(click.style("✔", fg='green') + " " + test['name'])
+        if run_test(test, browser, verbose):
             passed.append(test)
-        finally:
-            g.end()
+        else:
+            failed.append(test)
 
     stop = time.time()
 
