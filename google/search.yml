@@ -1,5 +1,8 @@
 ---
 - name: "Google for Duck Duck Go / DDG for Google"
+  browsers:
+    - chrome
+
   test:
     - load: "https://google.com"
     - submit:

@@ -2,9 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Surely we can do
-basic acceptance testing
-with just 7 commands
+Basic acceptance testing with just 7 commands
 (& 5 asserts)
 
 Browser Commands: load, click, fill, submit, wait, switch_to, navigate
@@ -28,17 +26,32 @@ def milli_now():
 
 
 class GhostlyTestFailed(Exception):
-    pass
+    def __init__(self, message):
+        self.message = message
 
 
 class Ghostly:
 
-    def __init__(self, browser):
-        browser = browser.lower()
-        if browser == 'firefox':
+    def __init__(self, browser, width, height):
+        if isinstance(browser, dict):
+            self.browser_name = 'remote'
+        else:
+            self.browser_name = browser.lower()
+
+        if self.browser_name == 'firefox':
             self.browser = webdriver.Firefox()
-        elif browser == 'chrome':
+        elif self.browser_name == 'chrome':
             self.browser = webdriver.Chrome()
+        elif self.browser_name == 'remote':
+            self.browser = webdriver.Remote(
+                command_executor=browser['remote']['url'],
+                desired_capabilities=browser['remote']
+            )
+            self.browser_name = "{} - {} {}".format(self.browser_name,
+                                                   browser['remote']['browser'],
+                                                   browser['remote']['browser_version'])
+
+        self.browser.set_window_size(width, height)
         self.browser.maximize_window()
 
     def end(self):
@@ -214,16 +227,22 @@ class Ghostly:
 def run_test(test, browser, verbose):
     # we create a new Ghostly instance for each tests, keeps things nice and
     # isolated / ensures there is a clear cache
-    g = Ghostly(browser)
+    width, height = test.get('screen_size', '1280x720').split('x')
+    g = Ghostly(browser, width, height)
+
     try:
+        click.echo('\n[{}] {}:'.format(g.browser_name, test['name']))
         for step in test['test']:
             # print step
             for f, v in step.items():
+                print('  - {} {}'.format(f, v), end="\r")
                 func = getattr(g, f)
                 if type(v) == list:
                     func(*v)
                 else:
                     func(v)
+                click.echo('  {} {} {}'.format(click.style("✔", fg='green'), f, v))
+
     # explicitly catch the possible error states and fail the test with an appropriate message
     except NoSuchElementException as e:
         fail(test['name'], "couldn't find element", e, verbose)
@@ -245,9 +264,8 @@ def run_test(test, browser, verbose):
 
 @click.command()
 @click.argument('ghostly_files', type=click.File('rb'), nargs=-1)
-@click.option('--browser', default='chrome', help='browser to use [chrome, firefox]')
 @click.option('--verbose', is_flag=True)
-def run_ghostly(ghostly_files, browser, verbose):
+def run_ghostly(ghostly_files, verbose):
     start = time.time()
     tests = []
     passed = []
@@ -260,10 +278,11 @@ def run_ghostly(ghostly_files, browser, verbose):
     plural = len(tests) != 1 and "s" or ""
     click.echo('Running {} test{}...'.format(len(tests), plural))
     for test in tests:
-        if run_test(test, browser, verbose):
-            passed.append(test)
-        else:
-            failed.append(test)
+        for browser in test.get('browsers', ['chrome',]):
+            if run_test(test, browser, verbose):
+                passed.append(test)
+            else:
+                failed.append(test)
 
     stop = time.time()
 
@@ -275,6 +294,7 @@ def run_ghostly(ghostly_files, browser, verbose):
 
 
 def fail(name, reason, exception=None, verbose=False):
+    print('  ' + click.style("✘", fg='red'))  # mark the current (indented) test line as failed
     click.echo(click.style("✘", fg='red') + " {} ({})".format(name, reason))
     if verbose:
         click.echo(exception)
