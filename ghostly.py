@@ -189,7 +189,11 @@ class Ghostly:
         element = self._get_element(selector)
 
         if text not in element.text:
-            raise GhostlyTestFailed("{} not in {}".format(text, element.text))
+            text = ' '.join(element.text.splitlines())
+            if len(text) > 30:
+                text = text[:30] + '...'
+
+            raise GhostlyTestFailed("{} not in {}".format(text, text))
 
     def assert_element(self, selector):
         """
