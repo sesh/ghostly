@@ -84,6 +84,8 @@ class Ghostly:
                     elements = parent.find_elements_by_id(selector.replace('#', ''))
                 elif selector.startswith('.'):
                     elements = parent.find_elements_by_class_name(selector.replace('.', ''))
+                elif selector.startswith('//'):
+                    elements = parent.find_elements_by_xpath(selector)
                 else:
                     funcs = [
                         parent.find_elements_by_tag_name,
@@ -115,7 +117,7 @@ class Ghostly:
 
     def load(self, url):
         """
-        Load the provided URL in the web browser
+        Load the provided URL in the web browser.
         """
         self.browser.get(url)
 
@@ -126,14 +128,19 @@ class Ghostly:
             - .class_name
             - #element_id
             - element
+            - //button[text()="Next"]
             - "Link Text"
+
+        Example:
+
+            - click: '//button[text()="Next"]'
         """
         element = self._get_element(selector)
         element.click()
 
     def submit(self, selector, *contents):
         """
-        Fill out and submit a form
+        Fill out and submit a form. See `fill` for details.
         """
         form = self.fill(selector, *contents)
         form.submit()
@@ -142,12 +149,22 @@ class Ghostly:
         """
         Fill out a form without submitting it.
 
-        Provide a list where the first item is the selector to use to find the form and
+        Provide a list where the first item is the selector to use to find a parent to the the form elements and
         all following items are <selector>: <value> pairs to be used to complete the form.
 
+        The string `<random>` will be replaced with a random string, unique for each `fill` command.
+
         Use the `submit` function if you also want to submit the form.
+
+        Example:
+
+            - fill:
+              - 'create-account'
+              - username: 'testuser'
+              - password: '<random>'
+              - confirm_password: '<random'
         """
-        r = ''.join(random.choice(string.letters + string.digits) for _ in range(12))
+        r = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(12))
         form = self._get_element(selector)
         for c in contents:
             for k, v in c.items():
@@ -159,6 +176,10 @@ class Ghostly:
     def wait(self, seconds):
         """
         Wait for a specified number of seconds
+
+        Example:
+
+            - wait: 10
         """
         if type(seconds) == str:
             seconds = int(seconds)
