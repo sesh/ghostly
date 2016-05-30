@@ -249,7 +249,7 @@ class Ghostly:
             raise GhostlyTestFailed("url is {} not {}".format(self.browser.current_url, url))
 
 
-def run_test(test, browser, verbose):
+def run_test(test, browser, tests, verbose=False, base_url=None):
     # we create a new Ghostly instance for each tests, keeps things nice and
     # isolated / ensures there is a clear cache
     width, height = test.get('screen_size', '1280x720').split('x')
@@ -260,6 +260,9 @@ def run_test(test, browser, verbose):
         for step in test['test']:
             # print step
             for f, v in step.items():
+                if f == 'load' and base_url:
+                    v = base_url
+
                 print('  - {} {}'.format(f, v), end="\r")
                 func = getattr(g, f)
                 if type(v) == list:
@@ -290,21 +293,23 @@ def run_test(test, browser, verbose):
 @click.command()
 @click.argument('ghostly_files', type=click.File('rb'), nargs=-1)
 @click.option('--verbose', is_flag=True)
-def run_ghostly(ghostly_files, verbose):
+@click.option('--base-url', default=None)
+def run_ghostly(ghostly_files, verbose, base_url):
     start = time.time()
-    tests = []
+    tests = {}
     passed = []
     failed = []
 
     for f in ghostly_files:
         test_yaml = yaml.load(f.read())
-        tests.extend(test_yaml)
+        for t in test_yaml:
+            tests[t['name']] = t
 
     plural = len(tests) != 1 and "s" or ""
     click.echo('Running {} test{}...'.format(len(tests), plural))
-    for test in tests:
+    for test in tests.values():
         for browser in test.get('browsers', ['chrome',]):
-            if run_test(test, browser, verbose):
+            if run_test(test, browser, tests, verbose, base_url):
                 passed.append(test)
             else:
                 failed.append(test)
