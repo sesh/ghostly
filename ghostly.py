@@ -42,6 +42,8 @@ class Ghostly:
             self.browser = webdriver.Firefox()
         elif self.browser_name == 'chrome':
             self.browser = webdriver.Chrome()
+        elif self.browser_name == 'phantomjs':
+            self.browser = webdriver.PhantomJS()
         elif self.browser_name == 'remote':
             self.browser = webdriver.Remote(
                 command_executor=browser['remote']['url'],
@@ -294,7 +296,8 @@ def run_test(test, browser, tests, verbose=False, base_url=None):
 @click.argument('ghostly_files', type=click.File('rb'), nargs=-1)
 @click.option('--verbose', is_flag=True)
 @click.option('--base-url', default=None)
-def run_ghostly(ghostly_files, verbose, base_url):
+@click.option('--browser', default=None)
+def run_ghostly(ghostly_files, verbose, base_url, browser):
     start = time.time()
     tests = {}
     passed = []
@@ -308,7 +311,9 @@ def run_ghostly(ghostly_files, verbose, base_url):
     plural = len(tests) != 1 and "s" or ""
     click.echo('Running {} test{}...'.format(len(tests), plural))
     for test in tests.values():
-        for browser in test.get('browsers', ['chrome',]):
+        browsers = [browser, ] if browser else test.get('browsers', ['chrome',])
+        for browser in browsers:
+            print(browser)
             if run_test(test, browser, tests, verbose, base_url):
                 passed.append(test)
             else:
