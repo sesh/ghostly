@@ -1,10 +1,46 @@
 # Ghostly
 
-### Running our sample tests
+
+### Installation
 
 ```shell
-./ghostly.py google/search.yml
+> pip install -U git+https://github.com/sesh/ghostly
 ```
+
+
+### Running the sample tests
+
+```shell
+> ./ghostly.py google/search.yml
+```
+
+---
+
+The actions and asserts available in ghostly are simple and straight forward. Check the source for better documentation.
+
+## Actions
+
+- load <url>
+- click <selector>
+- fill <selector> <contents>
+- submit <selector> <contents>
+- wait <time>
+- switch_to <selector>
+- navigate <back|forward>
+
+
+## Asserts
+
+- assert_text <text> <parent-selector>
+- assert_element <selector>
+- assert_value <selector> <value>
+- assert_title <value>
+- assert_url <url>
+
+
+## Browsers
+
+Currently ghostly supports running tests with one or more of `chrome` (via chromedriver), `firefox` and `phantomjs`.
 
 
 ### Browser Stack
