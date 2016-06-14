@@ -294,10 +294,11 @@ def run_test(test, browser, tests, verbose=False, base_url=None):
 
 @click.command()
 @click.argument('ghostly_files', type=click.File('rb'), nargs=-1)
+@click.option('--test', nargs=1, type=str)
 @click.option('--verbose', is_flag=True)
 @click.option('--base-url', default=None)
 @click.option('--browser', default=None)
-def run_ghostly(ghostly_files, verbose, base_url, browser):
+def run_ghostly(ghostly_files, test, verbose, base_url, browser):
     start = time.time()
     tests = {}
     passed = []
@@ -306,7 +307,8 @@ def run_ghostly(ghostly_files, verbose, base_url, browser):
     for f in ghostly_files:
         test_yaml = yaml.load(f.read())
         for t in test_yaml:
-            tests[t['name']] = t
+            if t['name'] == test or test is None:
+                tests[t['name']] = t
 
     plural = len(tests) != 1 and "s" or ""
     click.echo('Running {} test{}...'.format(len(tests), plural))
