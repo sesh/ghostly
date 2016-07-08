@@ -19,6 +19,7 @@ import yaml
 
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, WebDriverException
+from selenium.webdriver.common.keys import Keys
 
 
 def milli_now():
@@ -174,6 +175,11 @@ class Ghostly:
                 element = self._get_element(k, parent=form)
                 element.send_keys(v)
         return form
+
+    def send_keypress(self, keys):
+        keys = getattr(Keys, keys, keys)
+        element = self._get_element('body')
+        element.send_keys(keys)
 
     def wait(self, seconds):
         """
