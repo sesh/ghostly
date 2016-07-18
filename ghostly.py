@@ -55,7 +55,6 @@ class Ghostly:
                                                    browser['remote']['browser_version'])
 
         self.browser.set_window_size(width, height)
-        self.browser.maximize_window()
 
     def end(self):
         self.browser.quit()
@@ -255,6 +254,12 @@ class Ghostly:
         self.wait(1)
         if self.browser.current_url != url:
             raise GhostlyTestFailed("url is {} not {}".format(self.browser.current_url, url))
+
+    def screenshot(self, filename):
+        self.browser.get_screenshot_as_file(filename)
+
+    def scroll_to(self, y):
+        self.browser.execute_script("window.scrollTo(0, {});".format(y))
 
 
 def run_test(test, browser, tests, verbose=False, base_url=None):
