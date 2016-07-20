@@ -4,11 +4,11 @@ from setuptools import setup
 
 setup(
     name='ghostly',
-    version='0.3.0',
+    version='0.4.0',
     description='Create simple browser tests',
     author='Brenton Cleeland',
     url='https://github.com/sesh/ghostly',
-    install_requires=['click', 'colorama', 'PyYAML', 'selenium'],
+    install_requires=['click', 'colorama', 'pillow', 'PyYAML', 'selenium'],
     py_modules=['ghostly'],
     entry_points={
         'console_scripts': ['ghostly=ghostly:run_ghostly']

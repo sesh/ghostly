@@ -17,6 +17,9 @@ import time
 import click
 import yaml
 
+from PIL import Image
+from io import BytesIO
+
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, WebDriverException
 from selenium.webdriver.common.keys import Keys
@@ -45,6 +48,8 @@ class Ghostly:
             self.browser = webdriver.Chrome()
         elif self.browser_name == 'phantomjs':
             self.browser = webdriver.PhantomJS()
+        elif self.browser_name == 'safari':
+            self.browser = webdriver.Safari()
         elif self.browser_name == 'remote':
             self.browser = webdriver.Remote(
                 command_executor=browser['remote']['url'],
@@ -55,6 +60,8 @@ class Ghostly:
                                                    browser['remote']['browser_version'])
 
         self.browser.set_window_size(width, height)
+        self.width = width
+        self.height = height
 
     def end(self):
         self.browser.quit()
@@ -170,7 +177,9 @@ class Ghostly:
         form = self._get_element(selector)
         for c in contents:
             for k, v in c.items():
-                v = v.replace('<random>', r)
+                if '<random>' in v:
+                    v = v.replace('<random>', r)
+                    print(v)
                 element = self._get_element(k, parent=form)
                 element.send_keys(v)
         return form
@@ -256,7 +265,13 @@ class Ghostly:
             raise GhostlyTestFailed("url is {} not {}".format(self.browser.current_url, url))
 
     def screenshot(self, filename):
-        self.browser.get_screenshot_as_file(filename)
+        filename, ext = filename.rsplit('.')
+        filename = '{}_{}.{}'.format(filename, self.browser_name, ext)
+
+        png_data = BytesIO(self.browser.get_screenshot_as_png())
+        i = Image.open(png_data)
+        i = i.crop((0, 0, self.width, self.height))
+        i.save(filename)
 
     def scroll_to(self, y):
         self.browser.execute_script("window.scrollTo(0, {});".format(y))
@@ -265,7 +280,7 @@ class Ghostly:
 def run_test(test, browser, tests, verbose=False, base_url=None):
     # we create a new Ghostly instance for each tests, keeps things nice and
     # isolated / ensures there is a clear cache
-    width, height = test.get('screen_size', '1280x720').split('x')
+    width, height = [int(x) for x in test.get('screen_size', '1280x720').split('x')]
     g = Ghostly(browser, width, height)
 
     try:
