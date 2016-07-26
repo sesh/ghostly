@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name='ghostly',
-    version='0.4.0',
+    version='0.4.1',
     description='Create simple browser tests',
     author='Brenton Cleeland',
     url='https://github.com/sesh/ghostly',

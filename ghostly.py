@@ -37,6 +37,8 @@ class GhostlyTestFailed(Exception):
 class Ghostly:
 
     def __init__(self, browser, width, height):
+        self._random_value = None
+
         if isinstance(browser, dict):
             self.browser_name = 'remote'
         else:
@@ -62,6 +64,11 @@ class Ghostly:
         self.browser.set_window_size(width, height)
         self.width = width
         self.height = height
+
+    def get_random_value(self):
+        if not self._random_value:
+            self._random_value = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(12))
+        return self._random_value
 
     def end(self):
         self.browser.quit()
@@ -165,7 +172,7 @@ class Ghostly:
         Provide a list where the first item is the selector to use to find a parent to the the form elements and
         all following items are <selector>: <value> pairs to be used to complete the form.
 
-        The string `<random>` will be replaced with a random string, unique for each `fill` command.
+        The string `<random>` will be replaced with a random string, unique for each test run.
 
         Use the `submit` function if you also want to submit the form.
 
@@ -177,12 +184,11 @@ class Ghostly:
               - password: '<random>'
               - confirm_password: '<random'
         """
-        r = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(12))
         form = self._get_element(selector)
         for c in contents:
             for k, v in c.items():
                 if '<random>' in v:
-                    v = v.replace('<random>', r)
+                    v = v.replace('<random>', self.get_random_value())
                     print(v)
                 element = self._get_element(k, parent=form)
                 element.send_keys(v)
