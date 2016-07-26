@@ -66,7 +66,7 @@ class Ghostly:
     def end(self):
         self.browser.quit()
 
-    def _get_element(self, selector, parent=None, wait=10):
+    def _get_element(self, selector, parent=None, wait=10, retries=10):
         """
         Returns a single element using a stripped down version of the jQuery lookup
         functions. Options are:
@@ -83,44 +83,48 @@ class Ghostly:
         # disable the browser/selenium wait time so that we can use our own logic
         self.browser.implicitly_wait(0)
 
-        element = None
-        while milli_now() < start + wait:
-            if not parent:
-                parent = self.browser
+        # automatically retry
+        if not retries:
+            retries = 1
 
-            try:
-                if selector.startswith('#'):
-                    elements = parent.find_elements_by_id(selector.replace('#', ''))
-                elif selector.startswith('.'):
-                    elements = parent.find_elements_by_class_name(selector.replace('.', ''))
-                elif selector.startswith('//'):
-                    elements = parent.find_elements_by_xpath(selector)
-                else:
-                    funcs = [
-                        parent.find_elements_by_tag_name,
-                        parent.find_elements_by_name,
-                        parent.find_elements_by_id,
-                        parent.find_elements_by_css_selector,
-                        parent.find_elements_by_link_text
-                    ]
+        for x in range(retries):
+            while milli_now() < start + wait:
+                if not parent:
+                    parent = self.browser
 
-                    for f in funcs:
-                        try:
-                            elements = f(selector)
-                            if elements:
-                                break
-                        except NoSuchElementException:
-                            pass
+                try:
+                    if selector.startswith('#'):
+                        elements = parent.find_elements_by_id(selector.replace('#', ''))
+                    elif selector.startswith('.'):
+                        elements = parent.find_elements_by_class_name(selector.replace('.', ''))
+                    elif selector.startswith('//'):
+                        elements = parent.find_elements_by_xpath(selector)
+                    else:
+                        funcs = [
+                            parent.find_elements_by_tag_name,
+                            parent.find_elements_by_name,
+                            parent.find_elements_by_id,
+                            parent.find_elements_by_css_selector,
+                            parent.find_elements_by_link_text
+                        ]
 
-                if elements:
-                    for element in elements:
-                        # ignore hidden form elements
-                        if element.tag_name.lower() == 'input' and element.get_attribute('type') == 'hidden':
-                            continue
-                        return element
+                        for f in funcs:
+                            try:
+                                elements = f(selector)
+                                if elements:
+                                    break
+                            except NoSuchElementException:
+                                pass
 
-            except NoSuchElementException:
-                pass
+                    if elements:
+                        for element in elements:
+                            # ignore hidden form elements
+                            if element.tag_name.lower() == 'input' and element.get_attribute('type') == 'hidden':
+                                continue
+                            return element
+
+                except NoSuchElementException:
+                    time.sleep(2)
 
         raise NoSuchElementException('Could not find element matching {}'.format(selector))
 
@@ -316,7 +320,6 @@ def run_test(test, browser, tests, verbose=False, base_url=None):
         g.end()
 
     return passed
-
 
 @click.command()
 @click.argument('ghostly_files', type=click.File('rb'), nargs=-1)
