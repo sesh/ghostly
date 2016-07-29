@@ -23,6 +23,7 @@ from io import BytesIO
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, WebDriverException
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import Select
 
 
 def milli_now():
@@ -193,6 +194,10 @@ class Ghostly:
                 element = self._get_element(k, parent=form)
                 element.send_keys(v)
         return form
+
+    def select(self, selector, value):
+        el = Select(self._get_element(selector))
+        el.select_by_value(value)
 
     def send_keypress(self, keys):
         keys = getattr(Keys, keys, keys)
