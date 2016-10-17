@@ -105,7 +105,7 @@ class Ghostly:
                         elements = parent.find_elements_by_id(selector.replace('#', ''))
                     elif selector.startswith('.'):
                         elements = parent.find_elements_by_class_name(selector.replace('.', ''))
-                    elif selector.startswith('//'):
+                    elif selector.startswith('//') or selector.startswith('(//'):
                         elements = parent.find_elements_by_xpath(selector)
                     else:
                         funcs = [
