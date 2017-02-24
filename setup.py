@@ -4,14 +4,17 @@ from setuptools import setup
 
 setup(
     name='ghostly',
-    version='0.4.2',
+    version='0.5.0',
     description='Create simple browser tests',
     author='Brenton Cleeland',
     url='https://github.com/sesh/ghostly',
     install_requires=['click', 'colorama', 'pillow', 'PyYAML', 'selenium'],
-    py_modules=['ghostly'],
+    py_modules=['ghostly', 'fright'],
     entry_points={
-        'console_scripts': ['ghostly=ghostly:run_ghostly']
+        'console_scripts': [
+            'ghostly=ghostly:run_ghostly',
+            'fright=fright:run_fright',
+        ]
     },
     classifiers=(
         'Intended Audience :: Developers',
