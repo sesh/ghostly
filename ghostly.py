@@ -62,9 +62,12 @@ class Ghostly:
                                                    browser['remote']['browser'],
                                                    browser['remote']['browser_version'])
 
-        self.browser.set_window_size(width, height)
-        self.width = width
-        self.height = height
+        if width and height:
+            self.browser.set_window_size(width, height)
+        else:
+            self.browser.maximize_window()
+
+        self.width, self.height = self.browser.get_window_size()
 
     def get_random_value(self):
         if not self._random_value:
@@ -295,7 +298,11 @@ class Ghostly:
 def run_test(test, browser, tests, verbose=False, base_url=None):
     # we create a new Ghostly instance for each tests, keeps things nice and
     # isolated / ensures there is a clear cache
-    width, height = [int(x) for x in test.get('screen_size', '1280x720').split('x')]
+    if test.get('screen_size'):
+        width, height = [int(x) for x in test.get('screen_size').split('x')]
+    else:
+        width, height = 1680, 900
+
     g = Ghostly(browser, width, height)
 
     try:
