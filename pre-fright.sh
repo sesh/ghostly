@@ -1,4 +1,4 @@
-#!/bin/env sh
+#!/bin/sh
 
 sudo apt install -y python3.5-dev git-core htop python3-pip python3-setuptools build-essential libfreetype6 libfreetype6-dev fontconfig
 

@@ -7,6 +7,10 @@ Basic acceptance testing with just 7 commands
 
 Browser Commands: load, click, fill, submit, wait, switch_to, navigate
 Asserts: assert_text, assert_element, assert_value, assert_title, assert_url
+
+Handy helpers:
+
+- XPath for button with text `'//button[text()="Confirm"]'`
 """
 
 import random
@@ -129,8 +133,8 @@ class Ghostly:
 
                     if elements:
                         for element in elements:
-                            # ignore hidden form elements
-                            if element.tag_name.lower() == 'input' and element.get_attribute('type') == 'hidden':
+                            # ignore hidden / disabled elements
+                            if element.get_attribute('disabled') or element.get_attribute('type') == 'hidden':
                                 continue
                             return element
 
@@ -338,6 +342,7 @@ def run_test(test, browser, tests, verbose=False, base_url=None):
         g.end()
 
     return passed
+
 
 @click.command()
 @click.argument('ghostly_files', type=click.File('rb'), nargs=-1)

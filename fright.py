@@ -14,7 +14,7 @@ from subprocess import Popen, PIPE
 @click.option('--rand-wait', default=True, type=bool)
 def run_fright(ghostly_files, workers, rand_wait):
     start = time.time()
-    cmd = ['ghostly', *ghostly_files, '--browser', 'phantomjs']
+    cmd = ['ghostly', *ghostly_files]
 
     all_workers = []
     for w in range(workers):
