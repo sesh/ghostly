@@ -1,12 +1,10 @@
 # Ghostly
 
-
-### Installation
+## Installation
 
 ```shell
 > pip install -U git+https://github.com/sesh/ghostly
 ```
-
 
 ### Running the sample tests
 
@@ -28,7 +26,6 @@ The actions and asserts available in ghostly are simple and straight forward. Ch
 - switch_to <selector>
 - navigate <back|forward>
 
-
 ## Asserts
 
 - assert_text <text> <parent-selector>
@@ -37,18 +34,16 @@ The actions and asserts available in ghostly are simple and straight forward. Ch
 - assert_title <value>
 - assert_url <url>
 
-
 ## Browsers
 
 Currently ghostly supports running tests with one or more of `chrome` (via chromedriver), `firefox` and `phantomjs`.
-
 
 ### Browser Stack
 
 Use [this form](https://www.browserstack.com/automate/python#setting-os-and-browser) to create compatible combinations
 of browser capabilities, then create a `remote` dict in your yaml file like this:
 
-```
+```yaml
 browsers:
   - remote:
       url: "http://<username>:<password>@hub.browserstack.com:80/wd/hub"

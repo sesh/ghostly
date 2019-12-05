@@ -13,11 +13,10 @@
       - "input"
       - "Duck Duck Go"
 
-    - click: "DuckDuckGo"
+    - click: '//*[@id="search"]//a'
     - wait: 2
 
     - assert_url: 'https://duckduckgo.com/'
-    - assert_title: "DuckDuckGo"
 
     - submit:
       - "form"

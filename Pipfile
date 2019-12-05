@@ -1,0 +1,16 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+click = "==7.0"
+colorama = "==0.4.1"
+selenium = "==3.141.0"
+PyYAML = "==5.2"
+Pillow = "==6.2.1"
+
+[requires]
+python_version = "3.7"

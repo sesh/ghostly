@@ -132,6 +132,9 @@ class Ghostly:
                                 pass
 
                     if elements:
+                        if len(elements) == 1:
+                            return elements[0]
+
                         for element in elements:
                             # ignore hidden / disabled elements
                             if element.get_attribute('disabled') or element.get_attribute('type') == 'hidden':
@@ -356,7 +359,7 @@ def run_ghostly(ghostly_files, verbose, base_url, browser):
     failed = []
 
     for f in ghostly_files:
-        test_yaml = yaml.load(f.read())
+        test_yaml = yaml.load(f.read(), Loader=yaml.SafeLoader)
         for t in test_yaml:
             tests[t['name']] = t
 
