@@ -1,7 +1,7 @@
 click==7.0  # Updated from 5.1
 colorama==0.4.1  # Updated from 0.3.3
-PyYAML==5.2  # Updated from 3.11
-selenium==3.141.0  # Updated from 2.48.0
-Pillow==6.2.1
+PyYAML  # Updated from 3.11
+selenium  # Updated from 2.48.0
+Pillow
 
 # Generated with piprot 0.9.10
