@@ -257,6 +257,16 @@ class Ghostly:
 
             raise GhostlyTestFailed("{} not in {}".format(text, text))
 
+    def assert_not_text(self, text, selector='body'):
+        """
+        Assert that a piece of text is not present on the currently displayed page.
+        """
+        self.wait(1)
+        element = self._get_element(selector)
+
+        if text in element.text:
+            raise GhostlyTestFailed("{} is present in {}".format(text, element.text))
+
     def assert_element(self, selector):
         """
         Ensure that at least one element exists that matches the selector
