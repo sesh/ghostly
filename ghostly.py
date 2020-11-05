@@ -152,6 +152,9 @@ class Ghostly:
         """
         self.browser.get(url)
 
+    def refresh(self, *args):
+        self.browser.refresh()
+
     def click(self, selector):
         """
         Click on an element that's currently visble on the page. The element can be selected

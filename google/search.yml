@@ -5,6 +5,7 @@
 
   test:
     - load: "https://google.com"
+    - refresh: ""
     - submit:
       - "form"
       - q: "Duck Duck Go"
@@ -27,3 +28,5 @@
     - assert_value:
       - "btnI"
       - "I'm Feeling Lucky"
+
+    - wait: 5

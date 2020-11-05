@@ -29,6 +29,7 @@ The actions and asserts available in ghostly are simple and straight forward. Ch
 ## Asserts
 
 - assert_text <text> <parent-selector>
+- assert_not_text <text> <parent-selector>
 - assert_element <selector>
 - assert_value <selector> <value>
 - assert_title <value>
