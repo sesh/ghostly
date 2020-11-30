@@ -25,6 +25,8 @@ The actions and asserts available in ghostly are simple and straight forward. Ch
 - wait <time>
 - switch_to <selector>
 - navigate <back|forward>
+- dump <selector>
+- screenshot
 
 ## Asserts
 
