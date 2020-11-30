@@ -314,6 +314,10 @@ class Ghostly:
     def scroll_to(self, y):
         self.browser.execute_script("window.scrollTo(0, {});".format(y))
 
+    def dump(self, selector):
+        element = self._get_element(selector)
+        print(f"\nDump of {selector}:\n{element.text}\n")
+
 
 def run_test(test, browser, tests, verbose=False, base_url=None):
     # we create a new Ghostly instance for each tests, keeps things nice and
