@@ -316,7 +316,10 @@ class Ghostly:
 
     def dump(self, selector):
         element = self._get_element(selector)
-        print(f"\nDump of {selector}:\n{element.text}\n")
+        value = element.get_attribute("value")
+        if not value:
+            value = element.text
+        print("\nDump of {}:\n{}\n".format(element, value))
 
 
 def run_test(test, browser, tests, verbose=False, base_url=None):
