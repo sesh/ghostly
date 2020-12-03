@@ -13,6 +13,7 @@ setup(
     entry_points={
         'console_scripts': [
             'ghostly=ghostly:run_ghostly',
+            'fright=fright:run_fright',
         ]
     },
     classifiers=(
