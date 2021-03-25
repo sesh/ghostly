@@ -9,7 +9,7 @@ verify_ssl = true
 click = "==7.0"
 colorama = "==0.4.1"
 selenium = "==3.141.0"
-PyYAML = "==5.2"
+PyYAML = "==5.4"
 Pillow = "==6.2.1"
 
 [requires]
