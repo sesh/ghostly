@@ -10,7 +10,7 @@ click = "==7.0"
 colorama = "==0.4.1"
 selenium = "==3.141.0"
 PyYAML = "==5.2"
-Pillow = "==6.2.1"
+Pillow = "==8.3.2"
 
 [requires]
 python_version = "3.7"
