@@ -23,10 +23,12 @@
       - "form"
       - q: "Google"
 
-    - click: ".result__title"
+    - click: "Google"
 
     - assert_value:
       - "btnI"
       - "I'm Feeling Lucky"
 
     - wait: 5
+
+    - screenshot: 'out.png'

@@ -28,6 +28,7 @@ from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, WebDriverException
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
+from selenium.webdriver.common.by import By
 
 
 def milli_now():
@@ -40,42 +41,48 @@ class GhostlyTestFailed(Exception):
 
 
 class Ghostly:
-
     def __init__(self, browser, width, height):
         self._random_value = None
 
         if isinstance(browser, dict):
-            self.browser_name = 'remote'
+            self.browser_name = "remote"
         else:
             self.browser_name = browser.lower()
 
-        if self.browser_name == 'firefox':
+        if self.browser_name == "firefox":
             self.browser = webdriver.Firefox()
-        elif self.browser_name == 'chrome':
+        elif self.browser_name == "chrome":
             self.browser = webdriver.Chrome()
-        elif self.browser_name == 'phantomjs':
+        elif self.browser_name == "phantomjs":
             self.browser = webdriver.PhantomJS()
-        elif self.browser_name == 'safari':
+        elif self.browser_name == "safari":
             self.browser = webdriver.Safari()
-        elif self.browser_name == 'remote':
+        elif self.browser_name == "remote":
             self.browser = webdriver.Remote(
-                command_executor=browser['remote']['url'],
-                desired_capabilities=browser['remote']
+                command_executor=browser["remote"]["url"],
+                desired_capabilities=browser["remote"],
             )
-            self.browser_name = "{} - {} {}".format(self.browser_name,
-                                                   browser['remote']['browser'],
-                                                   browser['remote']['browser_version'])
+            self.browser_name = "{} - {} {}".format(
+                self.browser_name,
+                browser["remote"]["browser"],
+                browser["remote"]["browser_version"],
+            )
 
         if width and height:
             self.browser.set_window_size(width, height)
         else:
             self.browser.maximize_window()
 
-        self.width, self.height = self.browser.get_window_size()
+        self.width, self.height = (
+            self.browser.get_window_size()["width"],
+            self.browser.get_window_size()["height"],
+        )
 
     def get_random_value(self):
         if not self._random_value:
-            self._random_value = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(12))
+            self._random_value = "".join(
+                random.choice(string.ascii_letters + string.digits) for _ in range(12)
+            )
         return self._random_value
 
     def end(self):
@@ -108,24 +115,31 @@ class Ghostly:
                     parent = self.browser
 
                 try:
-                    if selector.startswith('#'):
-                        elements = parent.find_elements_by_id(selector.replace('#', ''))
-                    elif selector.startswith('.'):
-                        elements = parent.find_elements_by_class_name(selector.replace('.', ''))
-                    elif selector.startswith('//') or selector.startswith('(//'):
-                        elements = parent.find_elements_by_xpath(selector)
+                    if selector.startswith("#"):
+                        elements = parent.find_elements(
+                            By.ID, selector.replace("#", "")
+                        )
+                    elif selector.startswith("."):
+                        elements = parent.find_elements(
+                            By.CLASS_NAME, selector.replace(".", "")
+                        )
+                    elif selector.startswith("//") or selector.startswith("(//"):
+                        elements = parent.find_elements(By.XPATH, selector)
                     else:
-                        funcs = [
-                            parent.find_elements_by_tag_name,
-                            parent.find_elements_by_name,
-                            parent.find_elements_by_id,
-                            parent.find_elements_by_css_selector,
-                            parent.find_elements_by_link_text
+                        locator_strategies = [
+                            By.ID,
+                            By.XPATH,
+                            By.CSS_SELECTOR,
+                            By.CLASS_NAME,
+                            By.LINK_TEXT,
+                            By.TAG_NAME,
+                            By.NAME,
+                            By.PARTIAL_LINK_TEXT,
                         ]
 
-                        for f in funcs:
+                        for strategy in locator_strategies:
                             try:
-                                elements = f(selector)
+                                elements = parent.find_elements(strategy, selector)
                                 if elements:
                                     break
                             except NoSuchElementException:
@@ -137,14 +151,19 @@ class Ghostly:
 
                         for element in elements:
                             # ignore hidden / disabled elements
-                            if element.get_attribute('disabled') or element.get_attribute('type') == 'hidden':
+                            if (
+                                element.get_attribute("disabled")
+                                or element.get_attribute("type") == "hidden"
+                            ):
                                 continue
                             return element
 
                 except NoSuchElementException:
                     time.sleep(2)
 
-        raise NoSuchElementException('Could not find element matching {}'.format(selector))
+        raise NoSuchElementException(
+            "Could not find element matching {}".format(selector)
+        )
 
     def load(self, url):
         """
@@ -201,8 +220,8 @@ class Ghostly:
         form = self._get_element(selector)
         for c in contents:
             for k, v in c.items():
-                if '<random>' in v:
-                    v = v.replace('<random>', self.get_random_value())
+                if "<random>" in v:
+                    v = v.replace("<random>", self.get_random_value())
                     print(v)
                 element = self._get_element(k, parent=form)
                 element.send_keys(v)
@@ -214,7 +233,7 @@ class Ghostly:
 
     def send_keypress(self, keys):
         keys = getattr(Keys, keys, keys)
-        element = self._get_element('body')
+        element = self._get_element("body")
         element.send_keys(keys)
 
     def wait(self, seconds):
@@ -241,12 +260,14 @@ class Ghostly:
             - forward
             - back
         """
-        if navigation not in ['forward', 'back']:
-            raise AttributeError("An invalid option was given to the navigation command")
+        if navigation not in ["forward", "back"]:
+            raise AttributeError(
+                "An invalid option was given to the navigation command"
+            )
         f = getattr(self.browser, navigation)
         f()
 
-    def assert_text(self, text, selector='body'):
+    def assert_text(self, text, selector="body"):
         """
         Assert that a piece of text exists on the currently displayed page.
         """
@@ -254,13 +275,13 @@ class Ghostly:
         element = self._get_element(selector)
 
         if text not in element.text:
-            text = ' '.join(element.text.splitlines())
+            text = " ".join(element.text.splitlines())
             if len(text) > 30:
-                text = text[:30] + '...'
+                text = text[:30] + "..."
 
             raise GhostlyTestFailed("{} not in {}".format(text, text))
 
-    def assert_not_text(self, text, selector='body'):
+    def assert_not_text(self, text, selector="body"):
         """
         Assert that a piece of text is not present on the currently displayed page.
         """
@@ -289,26 +310,32 @@ class Ghostly:
         """
         self.wait(1)
         element = self._get_element(selector)
-        if element.get_attribute('value') != value:
-            raise GhostlyTestFailed("{} != {}".format(element.get_attribute('value'), value))
+        if element.get_attribute("value") != value:
+            raise GhostlyTestFailed(
+                "{} != {}".format(element.get_attribute("value"), value)
+            )
 
     def assert_title(self, value):
         self.wait(1)
         if self.browser.title != value:
-            raise GhostlyTestFailed("title is {} not {}".format(self.browser.title, value))
+            raise GhostlyTestFailed(
+                "title is {} not {}".format(self.browser.title, value)
+            )
 
     def assert_url(self, url):
         self.wait(1)
         if self.browser.current_url != url:
-            raise GhostlyTestFailed("url is {} not {}".format(self.browser.current_url, url))
+            raise GhostlyTestFailed(
+                "url is {} not {}".format(self.browser.current_url, url)
+            )
 
     def screenshot(self, filename):
-        filename, ext = filename.rsplit('.')
-        filename = '{}_{}.{}'.format(filename, self.browser_name, ext)
+        filename, ext = filename.rsplit(".")
+        filename = "{}_{}.{}".format(filename, self.browser_name, ext)
 
         png_data = BytesIO(self.browser.get_screenshot_as_png())
         i = Image.open(png_data)
-        i = i.crop((0, 0, self.width, self.height))
+        # i = i.crop((0, 0, self.width, self.height))
         i.save(filename)
 
     def scroll_to(self, y):
@@ -325,41 +352,41 @@ class Ghostly:
 def run_test(test, browser, tests, verbose=False, base_url=None):
     # we create a new Ghostly instance for each tests, keeps things nice and
     # isolated / ensures there is a clear cache
-    if test.get('screen_size'):
-        width, height = [int(x) for x in test.get('screen_size').split('x')]
+    if test.get("screen_size"):
+        width, height = [int(x) for x in test.get("screen_size").split("x")]
     else:
         width, height = 1680, 900
 
     g = Ghostly(browser, width, height)
 
     try:
-        click.echo('\n[{}] {}:'.format(g.browser_name, test['name']))
-        for step in test['test']:
+        click.echo("\n[{}] {}:".format(g.browser_name, test["name"]))
+        for step in test["test"]:
             # print step
             for f, v in step.items():
-                if f == 'load' and base_url:
+                if f == "load" and base_url:
                     v = base_url
 
-                print('  - {} {}'.format(f, v), end="\r")
+                print("  - {} {}".format(f, v), end="\r")
                 func = getattr(g, f)
                 if type(v) == list:
                     func(*v)
                 else:
                     func(v)
-                click.echo('  {} {} {}'.format(click.style("✔", fg='green'), f, v))
+                click.echo("  {} {} {}".format(click.style("✔", fg="green"), f, v))
 
     # explicitly catch the possible error states and fail the test with an appropriate message
     except NoSuchElementException as e:
-        fail(test['name'], "couldn't find element", e, verbose)
+        fail(test["name"], "couldn't find element", e, verbose)
         passed = False
     except WebDriverException as e:
-        fail(test['name'], "webdriver failed", e, verbose)
+        fail(test["name"], "webdriver failed", e, verbose)
         passed = False
     except GhostlyTestFailed as e:
-        fail(test['name'], e.message, e, verbose)
+        fail(test["name"], e.message, e, verbose)
         passed = False
     else:
-        click.echo(click.style("✔", fg='green') + " " + test['name'])
+        click.echo(click.style("✔", fg="green") + " " + test["name"])
         passed = True
     finally:
         g.end()
@@ -368,10 +395,10 @@ def run_test(test, browser, tests, verbose=False, base_url=None):
 
 
 @click.command()
-@click.argument('ghostly_files', type=click.File('rb'), nargs=-1)
-@click.option('--verbose', is_flag=True)
-@click.option('--base-url', default=None)
-@click.option('--browser', default=None)
+@click.argument("ghostly_files", type=click.File("rb"), nargs=-1)
+@click.option("--verbose", is_flag=True)
+@click.option("--base-url", default=None)
+@click.option("--browser", default=None)
 def run_ghostly(ghostly_files, verbose, base_url, browser):
     start = time.time()
     tests = {}
@@ -381,12 +408,23 @@ def run_ghostly(ghostly_files, verbose, base_url, browser):
     for f in ghostly_files:
         test_yaml = yaml.load(f.read(), Loader=yaml.SafeLoader)
         for t in test_yaml:
-            tests[t['name']] = t
+            tests[t["name"]] = t
 
     plural = len(tests) != 1 and "s" or ""
-    click.echo('Running {} test{}...'.format(len(tests), plural))
+    click.echo("Running {} test{}...".format(len(tests), plural))
     for test in tests.values():
-        browsers = [browser, ] if browser else test.get('browsers', ['chrome',])
+        browsers = (
+            [
+                browser,
+            ]
+            if browser
+            else test.get(
+                "browsers",
+                [
+                    "chrome",
+                ],
+            )
+        )
         for browser in browsers:
             print(browser)
             if run_test(test, browser, tests, verbose, base_url):
@@ -404,11 +442,13 @@ def run_ghostly(ghostly_files, verbose, base_url, browser):
 
 
 def fail(name, reason, exception=None, verbose=False):
-    print('  ' + click.style("✘", fg='red'))  # mark the current (indented) test line as failed
-    click.echo(click.style("✘", fg='red') + " {} ({})".format(name, reason))
+    print(
+        "  " + click.style("✘", fg="red")
+    )  # mark the current (indented) test line as failed
+    click.echo(click.style("✘", fg="red") + " {} ({})".format(name, reason))
     if verbose:
         click.echo(exception)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     run_ghostly()

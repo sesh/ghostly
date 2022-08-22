@@ -26,7 +26,7 @@ The actions and asserts available in ghostly are simple and straight forward. Ch
 - switch_to <selector>
 - navigate <back|forward>
 - dump <selector>
-- screenshot
+- screenshot <filename>
 
 ## Asserts
 
